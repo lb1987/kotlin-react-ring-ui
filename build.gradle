@@ -19,6 +19,8 @@ buildscript {
     }
 }
 
+project.ext.npmBuildDir = 'build/npm'
+
 repositories {
     maven { url "https://dl.bintray.com/kotlin/kotlin-dev" }
     mavenCentral()
@@ -59,7 +61,7 @@ ext.configurePublishing = { baseVersion ->
         archives sourcesJar
     }
 
-    def v = "$baseVersion-kotlin-$kotlin_version"
+//    def v = "$baseVersion-kotlin-$kotlin_version"
 //    bintray {
 //        user = System.getenv('BINTRAY_USER')
 //        key = System.getenv('BINTRAY_KEY')
@@ -77,17 +79,30 @@ ext.configurePublishing = { baseVersion ->
 //        publications = ['Publication']
 //    }
 
-    publishing {
-        publications {
-            Publication(MavenPublication) {
-                from components.java
-                groupId 'com.logrally'
-                artifactId projectName
-                version v
+//    publishing {
+//        publications {
+//            Publication(MavenPublication) {
+//                from components.java
+//                groupId 'com.logrally'
+//                artifactId projectName
+//                version v
+//
+//                artifact sourcesJar
+//            }
+//        }
+//    }
+}
 
-                artifact sourcesJar
-            }
-        }
+void copyNpmFile(String file, String name = file.toLowerCase().capitalize()) {
+    def t = tasks.create("copy$name", Copy) {
+        group = 'npm'
+        into npmBuildDir
+        from '.'
+        include file
+    }
+
+    npm_publish {
+        dependsOn t
     }
 }
 
@@ -99,29 +114,32 @@ ext.configurePublishingWithNPM = { baseVersion ->
         into 'build/npm'
         include 'package.json'
         expand(
-//            kotlin_version: "$kotlin_version",
+            kotlin_version: "$kotlin_version",
             react_version: "$kotlin_react_version",
             react_dom_version: "$kotlin_react_dom_version",
         )
     }
 
-    task prepublish(type: Copy) {
-        from '.'
-        into 'build/npm'
-        exclude 'package.json'
-        exclude 'build/npm'
+    task npmBuild(type: Copy, dependsOn: compileKotlin2Js) {
+        group = 'npm'
+        from 'build/classes/main'
+        into npmBuildDir
     }
+
+    copyNpmFile('README.md', 'Readme')
+    copyNpmFile('CHANGELOG.md', 'Changelog')
+    copyNpmFile('LICENSE.txt', 'License')
 
     npm_publish {
         args = ['--access', 'public']
         execOverrides {
-            it.workingDir = 'build/npm'
+            it.workingDir = npmBuildDir
         }
     }
 
-    npm_publish.dependsOn prepublish
+    npm_publish.dependsOn npmBuild
     npm_publish.dependsOn processPkg
-    prepublish.dependsOn build
+//    prepublish.dependsOn build
 }
 
-configurePublishingWithNPM(kotlin_react_dom_version)
+configurePublishingWithNPM(version)
