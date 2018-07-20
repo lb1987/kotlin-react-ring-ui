@@ -1,0 +1,127 @@
+group 'com.logrally'
+version '0.0.1-SNAPSHOT'
+
+def projectName = name
+
+buildscript {
+    apply from: 'versions.gradle'
+
+    repositories {
+        maven { url "https://dl.bintray.com/kotlin/kotlin-dev" }
+        jcenter()
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
+
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "com.moowork.gradle:gradle-node-plugin:$node_plugin_version"
+        classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:$bintray_plugin_version"
+    }
+}
+
+repositories {
+    maven { url "https://dl.bintray.com/kotlin/kotlin-dev" }
+    mavenCentral()
+    jcenter()
+    maven { url = "https://kotlin.bintray.com/kotlin-js-wrappers" }
+}
+
+apply plugin: 'kotlin2js'
+compileKotlin2Js {
+    kotlinOptions {
+        outputFile = "$projectDir/build/classes/main/${projectName}.js"
+        moduleKind = "commonjs"
+        sourceMap = true
+        metaInfo = true
+        sourceMapEmbedSources = "always"
+        main = "noCall"
+    }
+}
+
+dependencies {
+    compileOnly "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
+    compileOnly "org.jetbrains:kotlin-react:$kotlin_react_version-kotlin-$kotlin_version"
+    compileOnly "org.jetbrains:kotlin-react-dom:$kotlin_react_dom_version-kotlin-$kotlin_version"
+}
+
+ext.configurePublishing = { baseVersion ->
+    apply plugin: 'com.moowork.node'
+    apply plugin: 'com.jfrog.bintray'
+    apply plugin: 'maven-publish'
+    apply plugin: 'java'
+
+    task sourcesJar(type: Jar) {
+        classifier = 'sources'
+        from sourceSets.main.allSource
+    }
+
+    artifacts {
+        archives sourcesJar
+    }
+
+    def v = "$baseVersion-kotlin-$kotlin_version"
+//    bintray {
+//        user = System.getenv('BINTRAY_USER')
+//        key = System.getenv('BINTRAY_KEY')
+//        publish = true
+//        pkg {
+//            repo = 'kotlin-js-wrappers'
+//            name = projectName
+//            userOrg = 'kotlin'
+//            licenses = ['Apache-2.0']
+//            vcsUrl = 'https://github.com/JetBrains/kotlin-wrappers.git'
+//            version {
+//                name = v
+//            }
+//        }
+//        publications = ['Publication']
+//    }
+
+    publishing {
+        publications {
+            Publication(MavenPublication) {
+                from components.java
+                groupId 'com.logrally'
+                artifactId projectName
+                version v
+
+                artifact sourcesJar
+            }
+        }
+    }
+}
+
+ext.configurePublishingWithNPM = { baseVersion ->
+    configurePublishing(baseVersion)
+
+    task processPkg(type: Copy) {
+        from '.'
+        into 'build/npm'
+        include 'package.json'
+        expand(
+//            kotlin_version: "$kotlin_version",
+            react_version: "$kotlin_react_version",
+            react_dom_version: "$kotlin_react_dom_version",
+        )
+    }
+
+    task prepublish(type: Copy) {
+        from '.'
+        into 'build/npm'
+        exclude 'package.json'
+        exclude 'build/npm'
+    }
+
+    npm_publish {
+        args = ['--access', 'public']
+        execOverrides {
+            it.workingDir = 'build/npm'
+        }
+    }
+
+    npm_publish.dependsOn prepublish
+    npm_publish.dependsOn processPkg
+    prepublish.dependsOn build
+}
+
+configurePublishingWithNPM(kotlin_react_dom_version)
