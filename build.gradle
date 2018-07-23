@@ -32,7 +32,7 @@ apply plugin: 'kotlin2js'
 compileKotlin2Js {
     kotlinOptions {
         outputFile = "$projectDir/build/classes/main/${projectName}.js"
-        moduleKind = "commonjs"
+        moduleKind = "amd"
         sourceMap = true
         metaInfo = true
         sourceMapEmbedSources = "always"
