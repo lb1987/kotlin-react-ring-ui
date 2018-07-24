@@ -2,8 +2,13 @@ package ringui.dialog
 
 import react.RBuilder
 import react.RElementBuilder
+import react.RHandler
 import react.RProps
 import ringui.REventFunc
+import ringui.island.IslandContent
+import ringui.island.IslandContentProps
+import ringui.island.IslandHeader
+import ringui.island.IslandHeaderProps
 
 interface DialogProps : RProps {
     var className: String
@@ -29,4 +34,6 @@ fun RBuilder.dialog(show: Boolean, className: String? = null, contentClassName: 
     this.block()
 }
 
+fun RBuilder.dialogHeader(title: String, block: RHandler<IslandHeaderProps>) = child(IslandHeader::class, block)
 
+fun RBuilder.dialogContent(title: String, block: RHandler<IslandContentProps>) = child(IslandContent::class, block)
