@@ -97,6 +97,11 @@ class App : RComponent<RProps, AppState>() {
 fun RBuilder.app() = child(App::class) {}
 ```
 
+# Building
+```bash
+npm install
+gradle clean build
+```
 
 # License
 
