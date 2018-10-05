@@ -8,7 +8,7 @@ This library is easy to use with https://github.com/JetBrains/create-react-kotli
 
 ### Create your project
 ```bash
-npm install -g create-react-kotlin-app
+npm install create-react-kotlin-app
 npx create-react-kotlin-app my-app
 cd my-app
 npm install --save "@logrally/kotlin-react-ring-ui"
