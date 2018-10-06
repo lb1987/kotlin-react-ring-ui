@@ -12,6 +12,11 @@ external class Island : Component<IslandProps, RState> {
     override fun render(): ReactElement?
 }
 
+@JsName("AdaptiveIsland")
+external class AdaptiveIsland : Component<IslandProps, RState> {
+    override fun render(): ReactElement?
+}
+
 @JsName("Header")
 external class IslandHeader : Component<IslandHeaderProps, RState> {
     override fun render(): ReactElement?

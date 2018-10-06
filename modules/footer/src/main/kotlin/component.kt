@@ -4,7 +4,7 @@ import react.RBuilder
 import react.RHandler
 import react.RProps
 
-data class FooterLineData(val label: String, val url: String? = null)
+data class FooterLineData(val label: String, val url: String? = null, val title: String? = null, val target: String? = null)
 
 interface FooterProps : RProps {
     var className: String
@@ -16,6 +16,5 @@ interface FooterProps : RProps {
 
 fun RBuilder.footer(className: String? = null, block: RHandler<FooterProps> = {}) = child(Footer::class) {
     className?.let { attrs.className = className }
-
     block()
 }

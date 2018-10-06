@@ -16,7 +16,7 @@ interface DialogProps : RProps {
     var show: Boolean
     var showCloseButton: Boolean
     var onOverlayClick: () -> Unit
-    var onEscPress: REventFunc
+    var onEscPress: () -> Unit
     var onCloseClick: REventFunc
     // onCloseAttempt is a common callback for ESC pressing and overlay clicking.
     // Use it if you don't need different behaviors for this cases.
@@ -31,9 +31,15 @@ fun RBuilder.dialog(show: Boolean, className: String? = null, contentClassName: 
     className?.let { attrs.className = className }
     contentClassName?.let { attrs.contentClassName = contentClassName }
 
-    this.block()
+    block()
 }
 
-fun RBuilder.dialogHeader(title: String, block: RHandler<IslandHeaderProps>) = child(IslandHeader::class, block)
+fun RElementBuilder<DialogProps>.header(title: String? = null, block: RHandler<IslandHeaderProps> = {}) = child(IslandHeader::class) {
+    title?.let { +it }
+    block()
+}
 
-fun RBuilder.dialogContent(title: String, block: RHandler<IslandContentProps>) = child(IslandContent::class, block)
+fun RElementBuilder<DialogProps>.content(content: String? = null, block: RHandler<IslandContentProps> = {}) = child(IslandContent::class) {
+    content?.let { +it }
+    block()
+}

@@ -4,40 +4,47 @@ import react.RBuilder
 import react.RHandler
 import ringui.RDynamicProps
 import ringui.REventFunc
-import ringui.icon.Icon
 
 interface ButtonProps : RDynamicProps {
+    var theme: String
     var active: Boolean
-    var blue: Boolean
     var danger: Boolean
     var delayed: Boolean
     var loader: Boolean
     var primary: Boolean
     var short: Boolean
+    var text: Boolean
+    var inline: Boolean
+    var dropdown: Boolean
+
     var iconSize: Int
-    //    var className: String
-//    var children: Children
+    var iconClassName: String
 
-    //Icon or ()->Icon
-//    var icon: dynamic
+    // icon: String | ()->String
+    fun icon(value: String, iconSize: Int? = null, className: String? = null) {
+        this.icon = value
+        iconSize?.let { this.iconSize = it }
+        className?.let { this.iconClassName = it }
+    }
 
-//    fun icon(value: Icon) {
-//        this.icon = value
-//    }
-
-//    fun icon(value: () -> Icon) {
-//        this.icon = value
-//    }
+    fun icon(value: () -> String, iconSize: Int? = null, className: String? = null) {
+        this.asDynamic().icon = value
+        iconSize?.let { this.iconSize = it }
+        className?.let { this.iconClassName = it }
+    }
 }
 
-fun RBuilder.button(label: String? = null, active: Boolean? = null, blue: Boolean? = null, danger: Boolean? = null, primary: Boolean? = null, onClick: REventFunc? = null, block: RHandler<ButtonProps> = {}) = child(Button::class) {
-    active?.let { attrs.active = active }
-    blue?.let { attrs.blue = blue }
-    danger?.let { attrs.danger = danger }
-    primary?.let { attrs.primary = primary }
+fun RBuilder.button(label: String? = null, active: Boolean? = null, primary: Boolean? = null, danger: Boolean? = null, icon: String? = null, iconSize: Int? = null, href: String? = null, theme: String? = null, onClick: REventFunc? = null, block: RHandler<ButtonProps> = {}) = child(Button::class) {
+    active?.let { attrs.active = it }
+    primary?.let { attrs.primary = it }
+    danger?.let { attrs.danger = it }
 
-    label?.let { +label }
-    onClick?.let { attrs.onClick = onClick }
+    label?.let { +it }
+    icon?.let { attrs.icon(it, iconSize) }
+    href?.let { attrs.href = it }
+    theme?.let { attrs.theme = it }
+    onClick?.let { attrs.onClick = it }
+
     this.block()
 }
 
