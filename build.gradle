@@ -1,7 +1,6 @@
+// will be inherited by all published npm modules
+version '0.0.14'
 group 'com.logrally'
-version '0.0.2-SNAPSHOT'
-
-def projectName = name
 
 buildscript {
     apply from: 'versions.gradle'
@@ -19,32 +18,8 @@ buildscript {
     }
 }
 
-project.ext.npmBuildDir = 'build/npm'
-
-repositories {
-    maven { url "https://dl.bintray.com/kotlin/kotlin-dev" }
-    mavenCentral()
-    jcenter()
-    maven { url = "https://kotlin.bintray.com/kotlin-js-wrappers" }
-}
-
-apply plugin: 'kotlin2js'
-compileKotlin2Js {
-    kotlinOptions {
-        outputFile = "$projectDir/build/classes/main/${projectName}.js"
-        moduleKind = "amd"
-        sourceMap = true
-        metaInfo = true
-        sourceMapEmbedSources = "always"
-        main = "noCall"
-    }
-}
-
-dependencies {
-    compileOnly "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
-    compileOnly "org.jetbrains:kotlin-react:$kotlin_react_version-kotlin-$kotlin_version"
-    compileOnly "org.jetbrains:kotlin-react-dom:$kotlin_react_dom_version-kotlin-$kotlin_version"
-}
+project.ext.parentProjectDir = "${project.projectDir}"
+project.ext.parentVersion = "${version}"
 
 ext.configurePublishing = { baseVersion ->
     apply plugin: 'com.moowork.node'
@@ -60,86 +35,91 @@ ext.configurePublishing = { baseVersion ->
     artifacts {
         archives sourcesJar
     }
-
-//    def v = "$baseVersion-kotlin-$kotlin_version"
-//    bintray {
-//        user = System.getenv('BINTRAY_USER')
-//        key = System.getenv('BINTRAY_KEY')
-//        publish = true
-//        pkg {
-//            repo = 'kotlin-js-wrappers'
-//            name = projectName
-//            userOrg = 'kotlin'
-//            licenses = ['Apache-2.0']
-//            vcsUrl = 'https://github.com/JetBrains/kotlin-wrappers.git'
-//            version {
-//                name = v
-//            }
-//        }
-//        publications = ['Publication']
-//    }
-
-//    publishing {
-//        publications {
-//            Publication(MavenPublication) {
-//                from components.java
-//                groupId 'com.logrally'
-//                artifactId projectName
-//                version v
-//
-//                artifact sourcesJar
-//            }
-//        }
-//    }
 }
 
-void copyNpmFile(String file, String name = file.toLowerCase().capitalize()) {
-    def t = tasks.create("copy$name", Copy) {
-        group = 'npm'
-        into npmBuildDir
-        from '.'
-        include file
+subprojects {
+    repositories {
+        maven { url "https://dl.bintray.com/kotlin/kotlin-dev" }
+        mavenCentral()
+        jcenter()
+        maven { url = "https://kotlin.bintray.com/kotlin-js-wrappers" }
     }
 
-    npm_publish {
-        dependsOn t
-    }
-}
+    ext.npmBuildDir = "${project.buildDir}/npm"
+    println "NPM build dir: ${npmBuildDir}"
 
-ext.configurePublishingWithNPM = { baseVersion ->
-    configurePublishing(baseVersion)
-
-    task processPkg(type: Copy) {
-        from '.'
-        into 'build/npm'
-        include 'package.json'
-        expand(
-            kotlin_version: "$kotlin_version",
-            react_version: "$kotlin_react_version",
-            react_dom_version: "$kotlin_react_dom_version",
-        )
+    ext.simpleProjectName = project.name
+    if (simpleProjectName.contains("modules/")) {
+        simpleProjectName = project.name.substring("modules/".size())
     }
 
-    task npmBuild(type: Copy, dependsOn: compileKotlin2Js) {
-        group = 'npm'
-        from 'build/classes/main'
-        into npmBuildDir
+    ext.module_dependencies = ""
+    if (project.name != "shared") {
+        // must produce valid JSON in package.json
+        module_dependencies = ", \"@logrally/kotlin-ring-ui-shared\": \"~$parentVersion\""
     }
 
-    copyNpmFile('README.md', 'Readme')
-    copyNpmFile('CHANGELOG.md', 'Changelog')
-    copyNpmFile('LICENSE.txt', 'License')
-
-    npm_publish {
-        args = ['--access', 'public']
-        execOverrides {
-            it.workingDir = npmBuildDir
+    apply plugin: 'kotlin2js'
+    compileKotlin2Js {
+        kotlinOptions {
+            outputFile = "${project.buildDir}/classes/main/kotlin-ring-ui-${simpleProjectName}.js"
+            moduleKind = "amd"
+            sourceMap = true
+            metaInfo = true
+            sourceMapEmbedSources = "always"
+            main = "noCall"
         }
     }
 
-    npm_publish.dependsOn npmBuild
-    npm_publish.dependsOn processPkg
-//    prepublish.dependsOn build
-}
+    dependencies {
+        if (project.name != "shared") {
+            compileOnly project(":shared")
+        }
 
-configurePublishingWithNPM(version)
+        compileOnly "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
+        compileOnly "org.jetbrains:kotlin-react:$kotlin_react_version-kotlin-$kotlin_version"
+        compileOnly "org.jetbrains:kotlin-react-dom:$kotlin_react_dom_version-kotlin-$kotlin_version"
+    }
+
+    project.ext.configurePublishingWithNPM = { baseVersion ->
+        task npmBuild(type: Copy, dependsOn: build) {
+            group = 'npm'
+            from 'build/classes/main'
+            into npmBuildDir
+        }
+
+        task processPkg(type: Copy, dependsOn: build) {
+            from parentProjectDir
+            into npmBuildDir
+            include 'package.json'
+            expand(
+                    version: "$parentVersion",
+                    moduleName: "$simpleProjectName",
+                    kotlin_version: "$kotlin_version",
+                    react_version: "$kotlin_react_version",
+                    react_dom_version: "$kotlin_react_dom_version",
+                    module_dependencies: "$module_dependencies"
+            )
+        }
+
+        task copyFiles(type: Copy) {
+            from parentProjectDir
+            into npmBuildDir
+            include "README.md", "CHANGELOG.md", "LICENSE.txt"
+        }
+
+        apply plugin: 'com.moowork.node'
+        npm_publish {
+            args = ['--access', 'public']
+            execOverrides {
+                it.workingDir = npmBuildDir
+            }
+        }
+
+        npm_publish.dependsOn copyFiles
+        npm_publish.dependsOn npmBuild
+        npm_publish.dependsOn processPkg
+    }
+
+    configurePublishingWithNPM(version)
+}

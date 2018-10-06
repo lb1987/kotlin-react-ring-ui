@@ -1,7 +1,8 @@
 {
-  "name": "@logrally/kotlin-react-ring-ui",
+  "name": "@logrally/kotlin-ring-ui-${moduleName}",
+  "main":"kotlin-ring-ui-${moduleName}",
+  "version": "${version}",
   "description": "A  kotlin wrapper for the react ring-ui library",
-  "main": "kotlin-react-ring-ui.js",
   "author": "Joachim Ansorg",
   "license": "MIT",
   "homepage": "https://github.com/Logrally/kotlin-react-ring-ui",
@@ -19,9 +20,9 @@
     "react",
     "ring-ui"
   ],
-  "version": "0.0.3",
   "dependencies": {
     "@jetbrains/ring-ui": "^1.0.4"
+    $module_dependencies
   },
   "devDependencies": {
     "react": "^16.5.2",

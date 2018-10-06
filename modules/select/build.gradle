@@ -1,0 +1,4 @@
+dependencies {
+    compileOnly project(":modules/icon")
+    compileOnly project(":modules/popup")
+}
