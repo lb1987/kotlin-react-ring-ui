@@ -1,6 +1,12 @@
+**Please note that this project is not under active development. Writing a react application with Kotlin
+and ring-ui turned out to be rather unproductive. Too many roadblocks and things to implement in infrastructure before
+the actual application can be implemented. Also, the file size of the production app is too large to be useful.**
+
 # Kotlin wrappers for ring-ui
 
 This library is easy to use with https://github.com/JetBrains/create-react-kotlin-app .
+It's split into one npm module per ring-ui component because kotlin-js isn't supporting more than one
+module per project.
 
 ## Quickstart
 
@@ -22,6 +28,15 @@ how you need to configure your build configuration.
 Apply the changes to these files:
 - `node_modules/react-scripts-kotlin/config/webpack.config.dev.js`
 - `node_modules/react-scripts-kotlin/config/webpack.config.prod.js`
+
+### Add npm dependencies
+
+There's one npm module per ring-ui component. See https://www.npmjs.com/search?q=kotlin-ring-ui for the available modules.
+An unfinished application with a working base setup is available at https://github.com/Logrally/logrally-web.
+
+For example:
+
+```npm install --save @logrally/kotlin-ring-ui-shared @logrally/kotlin-ring-ui-alert```
 
 ### Run your application in development mode
 
